@@ -12,7 +12,7 @@ SCRATCH ?= /network/scratch/c/caleb.moses
 .PHONY: gpu_alloc show_logs set_secrets encrypt squeue trigger push dvc-setup
 
 start_lab:
-	mila serve lab --alloc -c 2 --mem=4G -t 2:00:00
+	mila serve lab --alloc --gres=gpu -c 2 --mem=4G -t 2:00:00
 
 start_local:
 	salloc --gres=gpu:1 -c 16 --mem=32G -t 6:00:00
