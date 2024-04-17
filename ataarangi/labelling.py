@@ -1,3 +1,4 @@
+from ataarangi import WorldState
 import matplotlib.pyplot as plt
 import random
 import json
@@ -7,7 +8,7 @@ import uuid
 
 def main():
     num_states = 5  # Define how many states you want to generate and record
-    output_folder = 'graphs'  # Folder to save graphs
+    output_folder = 'data/graphs'  # Folder to save graphs
     os.makedirs(output_folder, exist_ok=True)  # Ensure the output folder exists
     
     for _ in range(num_states):
@@ -25,7 +26,7 @@ def main():
         description = input("Please enter your description for the world state: ")
 
         # Append the description and ID to a JSON Lines file
-        with open('world_states.jsonl', 'a') as file:
+        with open('data/world_states.jsonl', 'a') as file:
             record = {
                 "id": state_id,
                 "description": description,
@@ -33,6 +34,7 @@ def main():
                 "image_path": file_path
             }
             file.write(json.dumps(record) + "\n")
+
 
 if __name__ == "__main__":
     main()
