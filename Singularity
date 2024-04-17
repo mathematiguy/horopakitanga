@@ -15,7 +15,7 @@ From: jupyter/datascience-notebook
 
 %files
     requirements.txt requirements.txt
-    nga_niupepa /pkg/nga_niupepa
+    ataarangi /pkg/ataarangi
     setup.py /pkg
 
 %post
@@ -51,7 +51,3 @@ From: jupyter/datascience-notebook
     echo "Installing python requirements"
     pip${PYTHON_VERSION} install -r requirements.txt
     pip3 install -e /pkg
-    # Install and precompile Julia packages
-    julia -e 'using Pkg; Pkg.add("IJulia"); Pkg.add("PackageCompiler"); Pkg.add("DataFrames"); Pkg.add("EzXML"); Pkg.add("Arrow"); Pkg.add("JSON"); Pkg.add("Tables"), Pkg.add("ProgressMeter"); Pkg.add("ArgParse"); Pkg.add("Debugger"); Pkg.add("Parquet2");'
-
-    chmod 755 -R /opt/julia

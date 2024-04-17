@@ -3,7 +3,7 @@ IMAGE ?= container.sif
 RUN ?= singularity exec $(FLAGS) $(IMAGE)
 SINGULARITY_ARGS ?=
 DVC_CACHE_DIR ?= $(shell dvc cache dir)
-FLAGS ?= --nv -B $$(pwd):/code --pwd /code -B $(DVC_CACHE_DIR)
+FLAGS ?= --nv -B $$(pwd):/code --pwd /code -B $(DVC_CACHE_DIR) -B ataarangi:/pkg/ataarangi --env MPLCONFIGDIR=/tmp/matplotlib
 VENV_PATH ?= venv
 
 include cluster/makefile
