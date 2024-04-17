@@ -3,12 +3,15 @@ IMAGE ?= container.sif
 RUN ?= singularity exec $(FLAGS) $(IMAGE)
 SINGULARITY_ARGS ?=
 DVC_CACHE_DIR ?= $(shell dvc cache dir)
-FLAGS ?= --nv -B $$(pwd):/code --pwd /code -B $(DVC_CACHE_DIR) -B ataarangi:/pkg/ataarangi --env MPLCONFIGDIR=/tmp/matplotlib
+FLAGS ?= -B $$(pwd):/code --pwd /code -B $(DVC_CACHE_DIR) -B ataarangi:/pkg/ataarangi --env MPLCONFIGDIR=/tmp/matplotlib
 VENV_PATH ?= venv
 
 include cluster/makefile
 
 .PHONY: show_logs trigger scratch archive repro predict start jupyter container push shell
+
+label:
+	$(RUN) python3 ataarangi/labelling.py
 
 run:
 	$(RUN) bash run.sh
