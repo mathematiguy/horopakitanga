@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 
 
 class Rākau:
-    
+
     def __init__(self, color, height, location, selected=False):
         self.color = color
         self.height = height
@@ -20,7 +20,7 @@ class Rākau:
 
 
 class WorldState:
-    
+
     def __init__(self):
         self.ngā_rākau = []
         self.colors = {}
@@ -72,24 +72,24 @@ class WorldState:
         if 0 <= index < len(self.ngā_rākau):
             self.ngā_rākau[index].toggle_selection()
 
-    def toggle_random_selections(self, n):
-        if n > len(self.ngā_rākau):
-            raise ValueError("Number of toggles requested exceeds the number of sticks available.")
-        
-        selected_indices = random.sample(range(len(self.ngā_rākau)), n)  # Get n unique random indices
+    def toggle_random_selections(self):
+        num_selections = random.choice(range(1, len(self.ngā_rākau)+1))
+        selected_indices = random.sample(range(len(self.ngā_rākau)), num_selections)  # Get n unique random indices
         for index in selected_indices:
             self.ngā_rākau[index].toggle_selection()  # Toggle the selection of each chosen stick
 
     def generate_rākau_until_budget(self, complexity_budget):
         while True:
             location = random.choice([x for x in range(1, 21) if not x in [rākau.location for rākau in self.ngā_rākau]])
-            new_rākau = Rākau(random.choice(['red', 'blue', 'green']), random.randint(1, 10), location)
+            new_rākau = Rākau(random.choice(['red', 'blue', 'green', 'yellow', 'black', 'white', 'brown', 'pink']), random.randint(1, 10), location)
             self.add_rākau(new_rākau)
             current_complexity = self.calculate_entropy()
-            logging.debug(f"Added {new_rākau}. Current complexity (entropy): {current_complexity:.2f}")
+            logging.info(f"Added {new_rākau}. Current complexity (entropy): {current_complexity:.2f}")
             if current_complexity > complexity_budget:
-                logging.debug("Complexity budget exceeded.")
+                logging.info("Complexity budget exceeded.")
                 break
+
+        self.toggle_random_selections()
 
     def calculate_entropy(self):
         # Calculate entropy for color, height, and x-coordinate distributions
@@ -99,21 +99,25 @@ class WorldState:
         return color_entropy + height_entropy + x_entropy
 
     def draw(self):
-        fig, ax = plt.subplots()
+        """ Draw the plot without blocking and without saving, showing selections. """
+        self.fig, ax = plt.subplots(figsize=(10, 6))
+
         for rākau in self.ngā_rākau:
-            x = rākau.location
-            height = rākau.height
-            color = rākau.color
-            edgecolor = 'red' if rākau.selected else 'black'
-            linestyle = 'dotted' if rākau.selected else 'solid'
-            linewidth = 2 if rākau.selected else 0
-            ax.bar(x, height, width=0.8, color=color, edgecolor=edgecolor, linewidth=linewidth, linestyle=linestyle, align='center')
+            edgecolor = 'black'  # Always black, regardless of selection
+            linestyle = '--' if rākau.selected else '-'  # Dashed if selected, solid otherwise
+            linewidth = 2 if rākau.selected else 1  # Slightly thicker if selected, else normal border
+            ax.bar(rākau.location, rākau.height, color=rākau.color, width=0.8, edgecolor=edgecolor, linestyle=linestyle, linewidth=linewidth)
 
         ax.set_xlim(0, 21)
         ax.set_ylim(0, 11)
-        ax.set_xlabel('Location')
+        ax.set_xlabel('X Coordinate')
         ax.set_ylabel('Height')
-        ax.set_title('World State Configuration of ngā_rākau')
-        ax.xaxis.set_ticks([])
-        ax.yaxis.set_ticks([])
+        ax.set_title('World State Configuration of Sticks')
+        plt.ion()  # Enable non-blocking mode
         plt.show()
+
+    def save(self, save_path):
+        """ Save the plot to a file and close it. """
+        if self.fig:
+            self.fig.savefig(save_path)  # Save the figure to a file
+            plt.close(self.fig)  # Close the figure to free up memory
