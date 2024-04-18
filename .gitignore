@@ -109,3 +109,4 @@ sandbox.sif/
 *.sif
 cluster/secrets.yaml
 */.#*
+data/graphs/
