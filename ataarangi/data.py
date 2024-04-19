@@ -1,12 +1,15 @@
+import json
 import torch
 import numpy as np
+import pandas as pd
 from torch.utils.data import Dataset
+from ataarangi.utils import split_chunks
 
 
 COLOURS = ['red', 'blue', 'green', 'yellow', 'black', 'white', 'brown', 'pink']
 color_map = dict(zip(COLOURS, range(len(COLOURS))))
 
- 
+
 class RākauDataset(Dataset):
     def __init__(self, raw_world_states, raw_text_data, world_state_tokenizer, text_tokenizer):
         self.world_state_tokenizer = world_state_tokenizer
@@ -26,9 +29,9 @@ class RākauDataset(Dataset):
         # Combine tokens with special tokens
         cls_token_id = self.world_state_tokenizer.token_map[self.world_state_tokenizer.cls_token]
         end_token_id = self.text_tokenizer.token_map[self.text_tokenizer.end_token]
-        
+
         input_ids = world_state_tokens + [cls_token_id] + text_tokens + [end_token_id]
-        
+
         # Create token type IDs and attention masks
         token_type_ids = [0] * (len(world_state_tokens) + 1) + [1] * (len(text_tokens) + 1)
         attention_mask = [1] * len(input_ids)
@@ -41,20 +44,36 @@ class RākauDataset(Dataset):
 
 
 def custom_collate_fn(batch):
+    # Extracting input_ids, token_type_ids, and attention_mask from the batch
     input_ids = [item['input_ids'] for item in batch]
     token_type_ids = [item['token_type_ids'] for item in batch]
     attention_mask = [item['attention_mask'] for item in batch]
 
-    # Pad sequences
-    input_ids = torch.tensor(dataset.pad_sequences(input_ids), dtype=torch.long)
-    token_type_ids = torch.tensor(dataset.pad_sequences(token_type_ids), dtype=torch.long)
-    attention_mask = torch.tensor(dataset.pad_sequences(attention_mask), dtype=torch.long)
+    # Find the maximum sequence length in this batch
+    max_len = max(len(ids) for ids in input_ids)
+
+    # Pad all sequences to this maximum length
+    padded_input_ids = torch.stack([torch.cat([ids, torch.zeros(max_len - len(ids), dtype=torch.long)]) for ids in input_ids])
+    padded_token_type_ids = torch.stack([torch.cat([ids, torch.zeros(max_len - len(ids), dtype=torch.long)]) for ids in token_type_ids])
+    padded_attention_mask = torch.stack([torch.cat([mask, torch.zeros(max_len - len(mask), dtype=torch.long)]) for mask in attention_mask])
 
     return {
-        'input_ids': input_ids,
-        'token_type_ids': token_type_ids,
-        'attention_mask': attention_mask
+        'input_ids': padded_input_ids,
+        'token_type_ids': padded_token_type_ids,
+        'attention_mask': padded_attention_mask
     }
+
+
+def load_data(train_path, dev_path, text_tokenizer, ws_tokenizer):
+
+    # Load training and dev data
+    train_data = pd.read_csv(train_path)
+    dev_data = pd.read_csv(dev_path)
+
+    train_data['rākau'] = train_data['rākau'].apply(json.loads)
+    dev_data['rākau'] = dev_data['rākau'].apply(json.loads)
+
+    return train_data, dev_data
 
 
 class WorldStateTokenizer:
@@ -68,6 +87,7 @@ class WorldStateTokenizer:
 
         # Create a mapping from tokens to their indices
         self.token_map = {token: i + 1 for i, token in enumerate(self.tokens)}
+        self.id_map = {id: token for token, id in self.token_map.items()}
 
     def tokenize(self, world_state):
         token_sequence = []
@@ -86,12 +106,21 @@ class WorldStateTokenizer:
 
         # Add the end token index
         tokens.append(self.token_map[self.cls_token])
-            
+
         return tokens
+
+    def decode(self, tokens):
+        tokens =  [self.id_map[token] for token in tokens[:-1]]
+        return [{
+            'color': d[0].split("_")[1],
+            'height': int(d[1].split("_")[1]),
+            'location': i
+            } for i, d in enumerate(split_chunks(tokens, 2))
+        ]
 
 
 class TextTokenizer:
-    
+
     def __init__(self, token_file='data/tokens.txt', min_index=20):
         self.token_file = token_file
         self.min_index = min_index
@@ -101,10 +130,15 @@ class TextTokenizer:
             self.end_token = self.tokens[-1]
 
         self.token_map = dict(zip(self.tokens, [self.min_index + i for i in range(len(self.tokens))]))
+        self.id_map = {id: token for token, id in self.token_map.items()}
 
     def tokenize(self, s):
         tokens = [self.token_map[token] for token in s.split(' ')] + [self.token_map[self.end_token]]
         return tokens
+
+    def decode(self, ids):
+        tokens = [self.id_map[id] for id in ids[:-1]]
+        return ' '.join(tokens)
 
 
 def generate_token_file(token_file_path):
@@ -148,10 +182,10 @@ def encode_world_state(sticks, num_locations=20, num_cols=10):
         matrix[color_index, location] = 1
         matrix[-1, location] = height  # Last row for height
 
-    # We want to remove empty columns    
+    # We want to remove empty columns
     # Check which columns are all zeros
     is_zero_column = np.all(matrix == 0, axis=0)
-    
+
     # Filter out columns that are all zeros
     matrix = matrix[:, ~is_zero_column]
 
@@ -163,7 +197,7 @@ def encode_world_state(sticks, num_locations=20, num_cols=10):
     if cols_to_add > 0:
         # Create a zero matrix of the same number of rows and the deficit in columns
         zero_padding = np.zeros((matrix.shape[0], cols_to_add))
-        
+
         # Concatenate the original matrix with the zero matrix on the right
         matrix = np.hstack((matrix, zero_padding))
 
