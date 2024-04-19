@@ -1,3 +1,11 @@
 ipython
 jupyter
 jupyterlab
+torch
+numpy
+pandas
+click
+matplotlib
+uuid
+optuna
+optuna-integration

@@ -58,7 +58,7 @@ def custom_collate_fn(batch):
 
 
 class WorldStateTokenizer:
-    def __init__(self, token_file='../data/worldstate_tokens.txt'):
+    def __init__(self, token_file='data/worldstate_tokens.txt'):
         self.token_file = token_file
 
         # Load tokens from a file
@@ -92,7 +92,7 @@ class WorldStateTokenizer:
 
 class TextTokenizer:
     
-    def __init__(self, token_file='../data/tokens.txt', min_index=20):
+    def __init__(self, token_file='data/tokens.txt', min_index=20):
         self.token_file = token_file
         self.min_index = min_index
 

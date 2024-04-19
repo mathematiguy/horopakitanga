@@ -110,3 +110,7 @@ sandbox.sif/
 cluster/secrets.yaml
 */.#*
 data/graphs/
+data/dev_set.csv
+data/rākau_data.csv
+data/test_set.csv
+data/train_set.csv

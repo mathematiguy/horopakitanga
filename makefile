@@ -10,6 +10,9 @@ include cluster/makefile
 
 .PHONY: show_logs trigger scratch archive repro predict start jupyter container push shell
 
+train:
+	$(RUN) python3 ataarangi/train.py --batch_size 64 --lr 0.001 --epochs 100 --train_path data/train_set.csv
+
 label:
 	$(RUN) python3 ataarangi/labelling.py
 
