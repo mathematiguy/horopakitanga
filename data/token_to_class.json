@@ -1,0 +1,108 @@
+{
+    "[PAD]": [
+     "[PAD]"
+    ],
+  "[SOS]": [
+    "[SOS]"
+  ],
+  "[SELECTION]": [
+    "[SELECTED]",
+    "[NOT_SELECTED]"
+  ],
+  "[COLOUR]": [
+    "[COLOUR_RED]",
+    "[COLOUR_BLUE]",
+    "[COLOUR_GREEN]",
+    "[COLOUR_YELLOW]",
+    "[COLOUR_BLACK]",
+    "[COLOUR_WHITE]",
+    "[COLOUR_BROWN]",
+    "[COLOUR_PINK]"
+  ],
+  "[HEIGHT]": [
+    "[HEIGHT_1]",
+    "[HEIGHT_2]",
+    "[HEIGHT_3]",
+    "[HEIGHT_4]",
+    "[HEIGHT_5]",
+    "[HEIGHT_6]",
+    "[HEIGHT_7]",
+    "[HEIGHT_8]",
+    "[HEIGHT_9]",
+    "[HEIGHT_10]"
+  ],
+  "[CLS]": [
+    "[CLS]"
+  ],
+  "colour": [
+    "mā",
+    "kōwhai",
+    "kikorangi",
+    "kākāriki",
+    "pango",
+    "māwhero",
+    "whero",
+    "parauri"
+  ],
+  "det": [
+    "te",
+    "ngā"
+  ],
+  "conjunction": [
+    "me"
+  ],
+  "noun": [
+    "rākau"
+  ],
+  "size": [
+    "iti",
+    "nui"
+  ],
+  "except": [
+    "hāunga"
+  ],
+  "locative": [
+    "kei"
+  ],
+  "position": [
+    "taha"
+  ],
+  "side": [
+    "mauī",
+    "matau"
+  ],
+  "number": [
+    "rua",
+    "toru"
+  ],
+  "all": [
+    "katoa"
+  ],
+  "furthest": [
+    "tawhiti_rawa"
+  ],
+  "most": [
+    "rawa"
+  ],
+  "to": [
+    "ki"
+  ],
+  "in": [
+    "i"
+  ],
+  "e": [
+    "e"
+  ],
+  "preposition": [
+    "waenganui"
+  ],
+  "particle": [
+    "mai"
+  ],
+  "ordinal": [
+    "tuarua"
+  ],
+  "[END]": [
+    "[END]"
+  ]
+}

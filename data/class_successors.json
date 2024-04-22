@@ -1,0 +1,111 @@
+{
+    "[CLS]": [
+        "det"
+    ],
+    "all": [
+        "except"
+    ],
+    "colour": [
+        "[END]",
+        "all",
+        "conjunction",
+        "e",
+        "furthest",
+        "in",
+        "locative",
+        "ordinal",
+        "size",
+        "to"
+    ],
+    "conjunction": [
+        "det"
+    ],
+    "det": [
+        "noun",
+        "position"
+    ],
+    "e": [
+        "number"
+    ],
+    "except": [
+        "det"
+    ],
+    "furthest": [
+        "to"
+    ],
+    "in": [
+        "det",
+        "preposition"
+    ],
+    "locative": [
+        "det",
+        "preposition"
+    ],
+    "most": [
+        "[END]",
+        "conjunction",
+        "e"
+    ],
+    "noun": [
+        "[END]",
+        "all",
+        "colour",
+        "e",
+        "except",
+        "furthest",
+        "size"
+    ],
+    "number": [
+        "[END]",
+        "conjunction",
+        "furthest",
+        "locative"
+    ],
+    "ordinal": [
+        "particle"
+    ],
+    "particle": [
+        "in"
+    ],
+    "position": [
+        "colour",
+        "side"
+    ],
+    "preposition": [
+        "[END]",
+        "conjunction"
+    ],
+    "side": [
+        "[END]",
+        "conjunction"
+    ],
+    "size": [
+        "[END]",
+        "conjunction",
+        "e",
+        "locative",
+        "most"
+    ],
+    "to": [
+        "det"
+    ],
+    "[SOS]": [
+        "[SELECTION]"
+    ],
+    "[SELECTION]": [
+        "[COLOUR]"
+    ],
+    "[COLOUR]": [
+        "[HEIGHT]"
+    ],
+    "[HEIGHT]": [
+        "[CLS]",
+        "[SELECTION]"
+    ],
+    "[END]": [
+        "[SOS]"
+    ],
+    "[PAD]": [
+        "[PAD]"
+    ]
+}
