@@ -2,6 +2,7 @@ import json
 import torch
 import numpy as np
 import pandas as pd
+from itertools import chain
 from torch.utils.data import Dataset
 from ataarangi.utils import split_chunks
 
@@ -11,29 +12,19 @@ color_map = dict(zip(COLOURS, range(len(COLOURS))))
 
 
 class RākauDataset(Dataset):
-    def __init__(self, raw_world_states, raw_text_data, world_state_tokenizer, text_tokenizer):
-        self.world_state_tokenizer = world_state_tokenizer
-        self.text_tokenizer = text_tokenizer
-
-        # Tokenize raw data
-        self.world_state_data = [self.world_state_tokenizer.tokenize(ws) for ws in raw_world_states]
-        self.text_data = [self.text_tokenizer.tokenize(text) for text in raw_text_data]
+    def __init__(self, tokens, tokenizer):
+        self.tokens = tokens
+        self.tokenizer = tokenizer
 
     def __len__(self):
-        return len(self.world_state_data)
+        return len(self.tokens)
 
     def __getitem__(self, idx):
-        world_state_tokens = self.world_state_data[idx]
-        text_tokens = self.text_data[idx]
-
-        # Combine tokens with special tokens
-        cls_token_id = self.world_state_tokenizer.token_map[self.world_state_tokenizer.cls_token]
-        end_token_id = self.text_tokenizer.token_map[self.text_tokenizer.end_token]
-
-        input_ids = world_state_tokens + [cls_token_id] + text_tokens + [end_token_id]
+        input_ids = self.tokens[idx]
 
         # Create token type IDs and attention masks
-        token_type_ids = [0] * (len(world_state_tokens) + 1) + [1] * (len(text_tokens) + 1)
+        cls_token_position = input_ids.index(self.tokenizer.cls_token_id) + 1
+        token_type_ids = [0] * (cls_token_position) + [1] * (len(input_ids) - cls_token_position)
         attention_mask = [1] * len(input_ids)
 
         return {
@@ -64,7 +55,7 @@ def custom_collate_fn(batch):
     }
 
 
-def load_data(train_path, dev_path, text_tokenizer, ws_tokenizer):
+def load_data(train_path, dev_path):
 
     # Load training and dev data
     train_data = pd.read_csv(train_path)
@@ -76,89 +67,78 @@ def load_data(train_path, dev_path, text_tokenizer, ws_tokenizer):
     return train_data, dev_data
 
 
-class WorldStateTokenizer:
-    def __init__(self, token_file='data/worldstate_tokens.txt'):
-        self.token_file = token_file
+class SequenceTokenizer:
+    def __init__(self, worldstate_file='data/worldstate_tokens.txt', text_file='data/tokens.txt'):
+        # Load tokens from files
+        with open(worldstate_file, 'r') as f:
+            worldstate_tokens = f.read().strip().split('\n')
 
-        # Load tokens from a file
-        with open(self.token_file, 'r') as f:
-            self.tokens = f.read().strip().split('\n')
-            self.cls_token = self.tokens[-1]  # Assuming the last token is a special end token
+        with open(text_file, 'r') as f:
+            text_tokens = f.read().strip().split('\n')
 
-        # Create a mapping from tokens to their indices
-        self.token_map = {token: i + 1 for i, token in enumerate(self.tokens)}
-        self.id_map = {id: token for token, id in self.token_map.items()}
+        # Combine the tokens ensuring no overlap in indices
+        all_tokens =  worldstate_tokens + text_tokens
+        self.token_map = {token: i for i, token in enumerate(all_tokens)}
+        self.id_map = {i: token for token, i in self.token_map.items()}
+        self.vocab_size = len(self.token_map)
+        self.cls_token_id = self.token_map['[CLS]']
 
-    def tokenize(self, world_state):
-        token_sequence = []
-        tokens = []
-        world_state = sorted(world_state, key=lambda x: x['location'])
-        for stick in world_state:
-            # Generate tokens for each attribute of the stick
-            color_token = f"color_{stick['color']}"
-            height_token = f"height_{stick['height']}"
+    def tokenize(self, input_sequence):
+        tokens = [self.token_map['[SOS]']]
+        previous_type = None
 
-            # Append token indices to the sequence
-            tokens.extend([
-                self.token_map[color_token],
-                self.token_map[height_token]
-            ])
+        for element in input_sequence:
+            current_type = 'world_state' if isinstance(element, dict) else 'text'
 
-        # Add the end token index
-        tokens.append(self.token_map[self.cls_token])
+            # Insert [CLS] token between changes from text to world state or vice versa
+            if previous_type is not None and previous_type != current_type:
+                if previous_type == 'world_state':
+                    tokens.append(self.token_map['[CLS]'])
+                elif previous_type == 'text':
+                    tokens.append(self.token_map['[EOS]'])
 
-        return tokens
+            if current_type == 'world_state':  # World state element
+                tokens.extend([
+                    self.token_map['[SELECTED]' if element['selected'] else '[NOT_SELECTED]'],
+                    self.token_map[f"[COLOUR_{element['color'].upper()}]"],
+                    self.token_map[f"[HEIGHT_{element['height']}]"]
+                ])
+            else:  # Text element
+                tokens.extend(self.token_map[token] for token in element.split(' '))
 
-    def decode(self, tokens):
-        tokens =  [self.id_map[token] for token in tokens[:-1]]
-        return [{
-            'color': d[0].split("_")[1],
-            'height': int(d[1].split("_")[1]),
-            'location': i
-            } for i, d in enumerate(split_chunks(tokens, 2))
-        ]
+            previous_type = current_type
 
-
-class TextTokenizer:
-
-    def __init__(self, token_file='data/tokens.txt', min_index=20):
-        self.token_file = token_file
-        self.min_index = min_index
-
-        with open(self.token_file, 'r') as f:
-            self.tokens = f.read().strip().split('\n')
-            self.end_token = self.tokens[-1]
-
-        self.token_map = dict(zip(self.tokens, [self.min_index + i for i in range(len(self.tokens))]))
-        self.id_map = {id: token for token, id in self.token_map.items()}
-
-    def tokenize(self, s):
-        tokens = [self.token_map[token] for token in s.split(' ')] + [self.token_map[self.end_token]]
-        return tokens
+        return tokens + [self.token_map['[EOS]']]
 
     def decode(self, ids):
-        tokens = [self.id_map[id] for id in ids[:-1]]
-        return ' '.join(tokens)
+        decoded_tokens = [self.id_map[id] for id in ids if id in self.id_map]
+        if '[COLOUR_' in decoded_tokens[0]:  # Assuming world state output
+            return [{'colour': token.split('_')[1].strip(']'), 'height': int(token.split('_')[2].strip(']'))}
+                    for token in decoded_tokens if 'COLOUR' in token]
+        else:  # Text output
+            return ' '.join(decoded_tokens)
 
 
-def generate_token_file(token_file_path):
-    colors = ['red', 'blue', 'green', 'yellow', 'black', 'white', 'brown', 'pink']
-    heights = range(1, 11)
-    locations = range(1, 11)
+def create_mask_matrix(tokenizer, class_successors_json="data/class_successors.json", token_to_class_json="data/token_to_class.json"):
 
-    tokens = []
-    for color in colors:
-        tokens.append(f"color_{color}")
-    for height in heights:
-        tokens.append(f"height_{height}")
-    for location in locations:
-        tokens.append(f"location_{location}")
+    class_successor_dict = json.load(open(class_successors_json))
+    token_to_class_dict = json.load(open(token_to_class_json))
 
-    tokens.append('<END>')  # Add an end token
+    class_to_tokens_dict = {k: list(chain.from_iterable([token_to_class_dict[l] for l in v])) for k, v in class_successor_dict.items()}
 
-    with open(token_file_path, 'w') as f:
-        for token in tokens:
-            f.write(token + '\n')
+    source_to_target_token_dict = {k2: v1 for k1, v1 in class_to_tokens_dict.items() for k2 in token_to_class_dict[k1]}
+    source_to_target_index_dict = {tokenizer.token_map[k]: [tokenizer.token_map[item] for item in v] for k, v in source_to_target_token_dict.items()}
+
+    tuple_list = [(k, v) for k, vs in source_to_target_index_dict.items() for v in vs]
+
+    # Initialize the mask matrix with zeros
+    mask_matrix = torch.zeros((tokenizer.vocab_size, tokenizer.vocab_size), dtype=torch.float32)
+
+    # Set valid transitions based on the tuple list
+    for src, dest in tuple_list:
+        mask_matrix[src, dest] = 1
+
+    return mask_matrix
 
 
 def encode_color(color):

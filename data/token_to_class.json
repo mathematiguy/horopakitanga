@@ -1,6 +1,6 @@
 {
-    "[PAD]": [
-     "[PAD]"
+  "[PAD]": [
+   "[PAD]"
     ],
   "[SOS]": [
     "[SOS]"
@@ -102,7 +102,7 @@
   "ordinal": [
     "tuarua"
   ],
-  "[END]": [
-    "[END]"
+  "[EOS]": [
+    "[EOS]"
   ]
 }

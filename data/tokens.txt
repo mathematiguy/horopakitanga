@@ -14,13 +14,13 @@ iti
 nui
 hāunga
 katoa
-rawa
 taha
 kei
 mauī
 matau
 ki
-tawhiti
+tawhiti_rawa
+rawa
 e
 rua
 waenganui
@@ -28,4 +28,4 @@ i
 toru
 tuarua
 mai
-<END>
+[EOS]

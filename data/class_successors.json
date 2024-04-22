@@ -6,7 +6,7 @@
         "except"
     ],
     "colour": [
-        "[END]",
+        "[EOS]",
         "all",
         "conjunction",
         "e",
@@ -42,12 +42,12 @@
         "preposition"
     ],
     "most": [
-        "[END]",
+        "[EOS]",
         "conjunction",
         "e"
     ],
     "noun": [
-        "[END]",
+        "[EOS]",
         "all",
         "colour",
         "e",
@@ -56,7 +56,7 @@
         "size"
     ],
     "number": [
-        "[END]",
+        "[EOS]",
         "conjunction",
         "furthest",
         "locative"
@@ -72,15 +72,15 @@
         "side"
     ],
     "preposition": [
-        "[END]",
+        "[EOS]",
         "conjunction"
     ],
     "side": [
-        "[END]",
+        "[EOS]",
         "conjunction"
     ],
     "size": [
-        "[END]",
+        "[EOS]",
         "conjunction",
         "e",
         "locative",
@@ -102,7 +102,7 @@
         "[CLS]",
         "[SELECTION]"
     ],
-    "[END]": [
+    "[EOS]": [
         "[SOS]"
     ],
     "[PAD]": [

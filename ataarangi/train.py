@@ -9,7 +9,7 @@ import torch.optim as optim
 import torch.nn.functional as F
 from torch.utils.data import DataLoader
 
-from ataarangi.data import encode_world_state, TextTokenizer, WorldStateTokenizer, RākauDataset, load_data, custom_collate_fn
+from ataarangi.data import encode_world_state, RākauDataset, SequenceTokenizer, load_data, custom_collate_fn, create_mask_matrix
 
 
 class TransformerModel(nn.Module):
@@ -47,20 +47,90 @@ class TransformerModel(nn.Module):
         output = self.transformer(src, tgt)
         return self.fc_out(output)
 
+    def generate(self, src_tokens, max_length=50):
+        if src_tokens.dim() == 1:
+            src_tokens = src_tokens.unsqueeze(0)  # Add a batch dimension if it's not there
 
-def train_one_epoch(model, criterion, optimizer, dataloader, device):
+        src = src_tokens.to(dtype=torch.long)  # Ensure src is long type
+        src_pos = self.positional_encodings[:, :src.size(1), :].to(src.device)
+        src = self.embedding(src) + src_pos
+
+        # Assuming SOS_TOKEN_INDEX is defined
+        SOS_TOKEN_INDEX = 0  # Define it based on your specific model's vocabulary
+        tgt_tokens = src.new_full((src.size(0), 1), fill_value=SOS_TOKEN_INDEX, dtype=torch.long)  # Ensure it's long type
+
+        for i in range(max_length - 1):
+            tgt_pos = self.positional_encodings[:, :tgt_tokens.size(1), :].to(src.device)
+            tgt = self.embedding(tgt_tokens) + tgt_pos
+
+            output = self.transformer(src, tgt)
+            output = self.fc_out(output[:, -1, :])  # Only take the last token's output
+            next_token = output.argmax(-1).unsqueeze(-1)
+            tgt_tokens = torch.cat([tgt_tokens, next_token], dim=-1)
+
+            # Assuming EOS_TOKEN_INDEX is defined
+            EOS_TOKEN_INDEX = 53
+            if next_token.item() == EOS_TOKEN_INDEX:
+                break
+
+        return tgt_tokens.squeeze(0)  # Remove the batch dimension if originally there was no batch dimension
+
+
+def train_one_epoch(model, criterion, optimizer, train_dataloader, mask_tensor, device):
     model.train()
     total_loss = 0
-    for batch in dataloader:
-        src = batch['input_ids'][:, :-1].to(device)
-        tgt = batch['input_ids'][:, 1:].to(device)
+    for batch in train_dataloader:
+        src = batch['input_ids'][:, :-1].to(device)  # Inputs to the model
+        tgt = batch['input_ids'][:, 1:].to(device)   # Expected outputs from the model
+
         optimizer.zero_grad()
-        output = model(src, tgt[:, :-1])
-        loss = criterion(output.reshape(-1, output.size(-1)), tgt[:, 1:].reshape(-1))
+        output = model(src, src)  # Assuming you're using the same src for both src and tgt in model forward pass
+
+        # Check the size and apply the cross-entropy loss
+        if output.shape[1] != tgt.shape[1]:
+            print(f"Adjusting target shape from {tgt.shape} to match output {output.shape[1]}")
+            tgt = tgt[:, :output.shape[1]]  # Adjust tgt length to match output length if necessary
+
+        # Calculate loss using the masked loss function
+        loss = masked_loss_function(output, tgt, mask_tensor, lambda_penalty=1.0)
         loss.backward()
         optimizer.step()
         total_loss += loss.item()
-    return total_loss / len(dataloader)
+
+    return total_loss / len(train_dataloader)
+
+
+def masked_loss_function(outputs, targets, mask_tensor=None, lambda_penalty=1.0):
+    """
+    outputs: Logits from the model (batch_size, seq_len, vocab_size)
+    targets: Ground truth indices for each position in the sequence (batch_size, seq_len)
+    mask_tensor: A tensor indicating valid next token classes (vocab_size, vocab_size)
+    lambda_penalty: Weighting factor for the penalty term
+    """
+
+    batch_size, seq_len, vocab_size = outputs.size()
+
+    if mask_tensor is None:
+        # If no mask is provided, create a mask that allows all transitions
+        mask_tensor = torch.ones((vocab_size, vocab_size), dtype=torch.float32, device=outputs.device)
+
+    # Apply mask to the output logits
+    if mask_tensor.size() != (vocab_size, vocab_size):
+        raise ValueError(f"Mask tensor size mismatch. Expected [{vocab_size}, {vocab_size}]")
+
+    # Expand mask tensor to match output dimensions [batch_size, seq_len, vocab_size, vocab_size]
+    mask_tensor = mask_tensor.unsqueeze(0).unsqueeze(0)  # [1, 1, vocab_size, vocab_size]
+    mask_tensor = mask_tensor.expand(batch_size, seq_len, -1, -1)  # [batch_size, seq_len, vocab_size, vocab_size]
+
+    # Calculate cross-entropy loss using the masked outputs
+    # You need to ensure that your mask_tensor is correctly applied to penalize invalid transitions
+    ce_loss = F.cross_entropy(outputs.transpose(1, 2), targets, reduction='mean')  # basic cross-entropy loss
+
+    # Modify this to incorporate your mask or transition penalties
+    # Example: applying a simple mask that could scale the logits before computing cross-entropy
+    # outputs_masked = outputs * mask_tensor (this line needs to be correctly implemented based on your mask logic)
+
+    return ce_loss
 
 
 def evaluate(model, criterion, dataloader, device):
@@ -76,25 +146,32 @@ def evaluate(model, criterion, dataloader, device):
     return total_loss / len(dataloader)
 
 
-def setup_model(lr, num_layers, embed_size, dim_feedforward, nhead, dropout, batch_size):
-    train_path = 'data/train_set.csv'
-    dev_path = 'data/dev_set.csv'
+def setup_model(lr, num_layers, embed_size, dim_feedforward, nhead, dropout, batch_size, train_path, dev_path, class_successors_json, token_to_class_json):
 
-    text_tokenizer = TextTokenizer()
-    ws_tokenizer = WorldStateTokenizer()
+    tokenizer = SequenceTokenizer()
+
+    mask_tensor = create_mask_matrix(tokenizer, class_successors_json, token_to_class_json)
 
     # Load data and initialize tokenizers
-    train_data, dev_data = load_data(train_path, dev_path, text_tokenizer, ws_tokenizer)
+    train_data, dev_data = load_data(train_path, dev_path)
+
+    train_tokens = train_data.apply(
+        lambda x: tokenizer.tokenize(x.rākau + x.description.split(' ')),
+        axis=1)
+
+    dev_tokens = dev_data.apply(
+        lambda x: tokenizer.tokenize(x.rākau + x.description.split(' ')),
+        axis=1)
 
     # Prepare datasets and dataloaders
-    train_dataset = RākauDataset(train_data['rākau'], train_data['description'], ws_tokenizer, text_tokenizer)
-    dev_dataset = RākauDataset(dev_data['rākau'], dev_data['description'], ws_tokenizer, text_tokenizer)
+    train_dataset = RākauDataset(train_tokens, tokenizer)
+    dev_dataset = RākauDataset(dev_tokens, tokenizer)
     train_dataloader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True, num_workers=4, collate_fn=custom_collate_fn)
     dev_dataloader = DataLoader(dev_dataset, batch_size=batch_size, shuffle=False, num_workers=4, collate_fn=custom_collate_fn)
 
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     model = TransformerModel(
-        vocab_size=max(text_tokenizer.token_map.values())+1,
+        vocab_size=tokenizer.vocab_size,
         embed_size=embed_size,
         nhead=nhead,
         num_encoder_layers=num_layers,
@@ -105,7 +182,7 @@ def setup_model(lr, num_layers, embed_size, dim_feedforward, nhead, dropout, bat
     ).to(device)
     criterion = nn.CrossEntropyLoss()
     optimizer = optim.Adam(model.parameters(), lr=lr)
-    return model, train_dataloader, dev_dataloader, criterion, optimizer, device
+    return model, train_dataloader, dev_dataloader, criterion, optimizer, mask_tensor, device
 
 
 @click.command()
@@ -120,9 +197,11 @@ def setup_model(lr, num_layers, embed_size, dim_feedforward, nhead, dropout, bat
 @click.option('--train_path', type=str, help='Path to the training data file.')
 @click.option('--dev_path', type=str, help='Path to the dev data file.')
 @click.option('--model_folder', default='models', type=str, help='Folder to save the model checkpoints.')
-def run_training(lr, num_layers, embed_size, dim_feedforward, nhead, dropout, batch_size, epochs, train_path, dev_path, model_folder):
+@click.option('--class_successors_json', default="data/class_successors.json", type=str, help='Path to class_successors.json file.')
+@click.option('--token_to_class_json', default="data/token_to_class.json", type=str, help='Path to token_to_class.json file.')
+def run_training(lr, num_layers, embed_size, dim_feedforward, nhead, dropout, batch_size, epochs, train_path, dev_path, model_folder, class_successors_json, token_to_class_json):
 
-    model, train_dataloader, dev_dataloader, criterion, optimizer, device = setup_model(lr, num_layers, embed_size, dim_feedforward, nhead, dropout, batch_size)
+    model, train_dataloader, dev_dataloader, criterion, optimizer, mask_tensor, device = setup_model(lr, num_layers, embed_size, dim_feedforward, nhead, dropout, batch_size, train_path, dev_path, class_successors_json, token_to_class_json)
 
     model_name = f'lr={lr}-num_layers={num_layers}-embed_size={embed_size}-nhead={nhead}-dim_ff={dim_feedforward}-dropout={dropout}'
 
@@ -136,7 +215,7 @@ def run_training(lr, num_layers, embed_size, dim_feedforward, nhead, dropout, ba
         history_file.write('epoch,train_loss,dev_loss\n')
 
         for epoch in range(epochs):
-            train_loss = train_one_epoch(model, criterion, optimizer, train_dataloader, device)
+            train_loss = train_one_epoch(model, criterion, optimizer, train_dataloader, mask_tensor, device)
             dev_loss = evaluate(model, criterion, dev_dataloader, device)
 
             # Log the epoch results
