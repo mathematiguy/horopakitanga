@@ -14,7 +14,7 @@ optimise:
 	$(RUN) python3 ataarangi/optimise.py --train_path data/train_set.csv --dev_path data/dev_set.csv --model_folder models
 
 train:
-	$(RUN) python3 ataarangi/train.py --batch_size 64 --lr 0.0003 --num_layers 3 --nhead 4 --embed_size 256 --dim_feedforward 1024 --epochs 1000 --dropout 0.1796 --train_path data/train_set.csv --dev_path data/dev_set.csv
+	$(RUN) python3 ataarangi/train.py --batch_size 64 --lr 0.00025 --num_layers 4 --embed_size 128 --hidden_size 512 --epochs 10000 --dropout 0.1395 --train_path data/train_set.csv --dev_path data/dev_set.csv
 
 label:
 	$(RUN) python3 ataarangi/labelling.py

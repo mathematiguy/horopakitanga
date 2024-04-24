@@ -20,4 +20,4 @@
 [HEIGHT_8]
 [HEIGHT_9]
 [HEIGHT_10]
-[CLS]
+[SEP]
