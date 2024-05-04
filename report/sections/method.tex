@@ -1,0 +1,85 @@
+\subsection{Dataset}
+
+We use the Enron Email Dataset \cite{enron2015email} provided by Dr. William W. Cohen, specifically, the May 7, 2015 version of the dataset. The dataset contains 517,401 emails from employees at Enron that were obtained by the Federal Energy Regulatory Commission during its investigation of Enron's collapse. 
+
+As this dataset only contains emails and little metadata, information about the authors was supplemented using additional sources. A \textit{New York Times} \cite{nytimes} archive was used to identify individuals who were convicted of crimes related to the collapse. Of these individuals, only four had emails present in the dataset, namely Kenneth Lay, Jeffrey Skilling, David Delainey, and John Forney. We shall refer to these individuals as persons-of-interest (POIs) from this point forward.
+
+\begin{table}[t]
+    \centering
+    \caption{The breakdown of emails in our dataset including the number of emails in the training, validation, and test sets, and the number of POI, executive, and normal employee emails in each.}
+    \label{tab:dataset_breakdown}
+    \resizebox{0.48\textwidth}{!}{%
+    \begin{tabular}{|l||r|r|r|r|}
+        \hline
+         & \textbf{POI} & \textbf{Executive} & \textbf{Normal} & \textbf{Total} \\
+        \hline
+        \hline
+        Training & 670 & 1,807 & 5,467 & \textbf{7,944} \\
+        \hline
+        Validation & 167 & 450 & 1,369 & \textbf{1,986} \\
+        \hline
+        Test & 272 & 774 & 2,264 & \textbf{3,310} \\
+        \hline
+        \textbf{Total} & \textbf{1,109} & \textbf{3,031} & \textbf{9,100} & \textbf{13,240} \\
+        \hline
+    \end{tabular}%
+    }
+\end{table}
+
+As all the POIs were executives at Enron, further information was collected to identify other executives in the dataset who were not eventually convicted of fraud. This was to ensure a fair comparison, and to add confidence that any features associated with POIs were not more broadly applicable to other executives. A dataset \cite{enron_financial_dataset} of financial information, while not containing any explicit information on employees' positions, was used to identify individuals similar to executives. For the purposes of this project, anyone with a salary above $\$200,000$ USD per year was considered an executive.
+%The dataset \cite{enron_financial_dataset} of financial information does not contain explicit information on employees' positions, but the salary information was used to identify individuals similar to executives. For the purposes of this project, anyone with a salary above $\$200,000$ USD per year was considered as an executive.
+
+
+
+%A dataset of financial information was found \cite{enron_financial_dataset}, and while this dataset did not contain explicit information on employees' positions, the salary information was used to identify individuals similar to executives. 
+
+A subset of the emails was used which consisted of emails from 22 authors: the 4 POIs (Lay, Skilling, Delainey, and Forney), 5 other executives who were not convicted of crimes, as well as 13 other ``normal" employees at Enron who were neither POIs nor executives. This uneven corporate rank distribution was chosen to reflect a more accurate employee-to-executive ratio to what might be expected in other companies. Overall, roughly 700 emails were taken from each person to ensure each author was similarly represented. This, however, was only applied to executives and normal employees, to ensure the fraction of POI emails would remain low. %This was to reflect the expectation that in a normal organization, the number of frauds would be expected to be low. 
+In particular, our email subset contained 13,240 emails with 8.3\% of emails from POIs, 22.9\% of emails from execs, and 68.8\% of emails from normal employees. 
+
+In terms of the authors chosen, the executive emails were taken from Allen, Kitchen, Lavorato, Shankman, and Shapiro. For the normal employee emails, they were taken from Bass, Dasovich, Davis, Germany, Jones, Lenhart, Mann, Nemec, Perlingiere, Rogers, Scott, Shackleton, and Symes. These authors were chosen since they had a large number of emails in the original Enron dataset.
+
+% Further cross-referencing with an article of the \textit{Financial Times} \cite{enron_financial_dataset}, which contains the income of many Enron employees, allowed us to annotate many of the email authors according to their status in the company. We refer to the employees with incomes above \$200K as execs, sometimes also differentiating higher execs (income over \$300K). This is important to avoid social status bias in politeness classification (cite someone who says low politeness correlates with high status?????). Authors for whom we were unable to find income information were assumed to be of ``normal'' income. 
+
+\subsection{Data Cleaning}
+
+% One major data processing step was to annotate the emails with extra information about the authors. Cross-referencing with an article in the \textit{New York Times} \cite{nytimes} which summarizes the outcomes of the Enron trials allowed us to identify authors that were convicted of, or plead guilty to, fraud. Since the Enron data set is not a complete collection of all emails written by Enron employees over the years, there were only four authors (Lay, Delainey, Skilling, Forney) who were convicted of fraud. Throughout our work, they are referred to as POI (people of interest). Further cross-referencing with an article of the \textit{Financial Times} \cite{enron_financial_dataset}, which contains the income of many Enron employees, allowed us to annotate many of the email authors according to their status in the company. We refer to the employees with incomes above \$200K as execs, sometimes also differentiating higher execs (income over \$300K). This is important to avoid social status bias in politeness classification (cite someone who says low politeness correlates with high status?????). Authors for whom we were unable to find income information were assumed to be of ``normal'' income. 
+
+Emails were gathered using the email addresses of the relevant individuals. Any email address that contained the name of an individual was used for that particular author.
+
+Since our focus was on the language of the authors themselves, careful selection was done to ensure that only emails written by the actual authors were kept. Forwarded and replied text was removed, as well as messages written by the secretaries or assistants of the individuals. This was done programmatically using the names of secretaries discovered in random samples of the dataset. While it is still possible that some emails may have been written by other individuals, for the emails of the POIs all emails were manually inspected to ensure they were all written by the sender. 
+
+Additional data cleaning involved removing empty and duplicate emails. Finally, only emails consisting of 5 words or more were kept, and all emails sent from before 1999 were also dropped since they only accounted for about 100 emails.
+
+\subsection{Modeling}
+
+Following Niculae et al., we model the positive sentiment, politeness, and planning discourse markers in the emails.
+
+For sentiment, the \textit{SiEBERT} \cite{sentimentModel} model from Huggingface was used. It is a fine-tuned checkpoint of RoBERTa-large, originally evaluated on diverse datasets coming from reviews, tweets and other similar sources. 
+
+For the politeness model, a pre-trained politeness model trained on the Wikipedia Politeness Corpus was used provided in the ConvoKit package.
+
+To study planning discourse, we collated a list of individual (single-word) and phrasal (bi-gram) planning discourse markers. The individual markers we chose were "shall", "going", "planning", "intend", "aim", "hope" and "expect", and the phrasal markers we chose were "plan to", "aim to", "looking forward", "in preparation" and "prepare for". For each class, and each month, we totaled the number of planning discourse markers we were able to match and divided by the number of sentences in the sample, as identified by NLTK. This gave us the percentage of planning discourse markers per sentence per month across each of the 3 employee classes under consideration.
+
+Finally, for training our own classifiers, we tested a mix of 24 different logistic regression and naïve Bayes models to predict whether an email was written by a POI. These models varied in the text preprocessing step or in the hyperparamter value (smoothing parameter for naïve Bayes, and regularization strength for logistic regression). 
+
+While these models are only linear classifiers, they were chosen due to their interpretability since the feature weights and probability values can measure the relative importance of the different words in the predictions.
+
+% Note that for the naïve Bayes models, the \texttt{ComplementNB} model was used in scikit-learn since this variant is better suited to imbalanced datasets, like the one here. 
+
+\subsection{Text Preprocessing}
+
+% All emails were cleaned, as described above, before further processing.
+
+For the sentiment analysis, politeness, and planning discourse markers, the emails were passed as-is to the model pipelines. 
+
+For classification, entities for organizations, locations, and people names were masked in the emails. This was done to avoid the models from learning Enron-specific features in the emails, as the goal was to find linguistic cues that were as generalizable as possible to other deception/fraud domains. Specifically, all names were replaced by ``Steve'', all organizations by ``Apple'' and all locations by ``Cupertino''.
+
+Emails were tokenized and lemmatized using NLTK. Stopwords were removed using NLTK's list of stopwords, and standard punctuation and digits were removed. Experiments involving stemming and bigrams were completed, however these models did not perform as well as unigram models.
+
+Words were vectorized using TF-IDF. Other vectorization schemes including embeddings and other pre-trained methods were not attempted in order to preserve the explainability of the features. 
+
+\subsection{Evaluation}
+
+The classifiers were trained on the training set, and hyperparameters and the choice of best model was based on the F1 score of the POI class on the validation set. The F1 score was used due to the heavily imbalanced nature of the dataset. For the training/validation/test split, see Table \ref{tab:dataset_breakdown}.
+
+The final evaluation reported in Table \ref{tab:best_model_metrics} is based on the precision, recall, and F1 score of the POI class on the test set.
