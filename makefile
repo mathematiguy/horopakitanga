@@ -8,13 +8,16 @@ VENV_PATH ?= venv
 
 include cluster/makefile
 
-.PHONY: show_logs trigger scratch archive repro predict start jupyter container push shell
+.PHONY: report show_logs trigger scratch archive repro predict start jupyter container push shell
+
+report:
+	$(RUN) bash -c "cd report && latexmk acl2023.tex -pdf"
 
 optimise:
 	$(RUN) python3 ataarangi/optimise.py --train_path data/train_set.csv --dev_path data/dev_set.csv --model_folder models
 
 train:
-	$(RUN) python3 ataarangi/train.py --batch_size 64 --lr 0.00025 --num_layers 4 --embed_size 128 --hidden_size 512 --epochs 10000 --dropout 0.1395 --train_path data/train_set.csv --dev_path data/dev_set.csv
+	$(RUN) python3 ataarangi/train.py --batch_size 32 --lr 0.00086 --num_layers 2 --embed_size 128 --hidden_size 256 --epochs 10000 --train_path data/train_set.csv --dev_path data/dev_set.csv
 
 label:
 	$(RUN) python3 ataarangi/labelling.py
@@ -28,6 +31,9 @@ jupyter:
 		--no-browser \
 		--port 8888 \
     --allow-root
+
+clean:
+	rm -f report/*.blg report/*.fls report/*.out report/*.log report/*.fdb_latexmk report/*.aux report/*.pdf report/*.bbl report/*.toc
 
 init:
 	dvc init && mkdir -p .dvc/cache

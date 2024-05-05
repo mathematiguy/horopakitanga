@@ -1,30 +1,32 @@
-Identifying deception is a difficult task \cite{mafia}. While humans usually act collaboratively, people can be incentivized to lie or deceive others for many reasons. %, whether to avoid confrontation or conflict, to avoid losing face, or for nefarious reasons including personal gain or the achievement of some criminal objective. 
-Previous studies have shown that people can struggle with identifying lies from truths \cite{mafia}. Even trained law enforcement professionals are only slightly better than chance at detecting deception \cite{enron_deception_gupta}.
+The Silent Way \cite{gattegno2010teaching} is a language teaching methodology which emphasises the subordination of teaching to learning. Lessons are conducted entirely in the target language, with a minimal vocabulary established in the early stages which incorporates simple utterances, instructions as well as hand-gestures. Cuisenaire rods are used to establish a world-state, which becomes a point for discussion where utterances can be hypothesised by the student and tested. When done in groups, lessons are overseen by a teacher but students take turns demonstrating their understanding to each other, and are able to correct and learn together.
 
-Many works have studied and identified different computational linguistic features which are correlated with deceptive actions in controlled environments, for example in games like \textit{Diplomacy} \cite{diplomacy} and \textit{Mafia} \cite{mafia}. In this work we speculate as to whether such deceptive patterns apply to more complex real-world settings, such as fraud detection.
+In New Zealand, as well as in other countries, the Silent Way has been adopted by the Māori people as a dominant teaching methodology, especially for second-language learners of the Māori language (te reo Māori). The methodology was specifically adapted to te reo Māori \cite{mataira1980effectiveness,ka2008ngoingoi} by Dame Kāterina Te Heikōkō Mataira and Ngoingoi Pewhairangi where it is referred to as ``Te Ataarangi''. In the classroom, students in Te Ataarangi are encouraged to master grammar by experiencing the language primarily through speaking and listening, and doing practical exercises with other students. The classroom operates according to the following rules:
 
-Among the most famous fraud cases is the collapse of Enron, the American energy company that filed for bankruptcy in 2001 after widespread fraud within the company was revealed by the media. In the aftermath of the scandal, several Enron executives and employees were convicted or pleaded guilty of fraud and related crimes.
+\begin{itemize}
+  \item Speaking in English is not allowed
+  \item Belittling other students is not allowed
+  \item Students are not allowed to prompt other students
+  \item Students can only reply when a question is posed directly to them
+  \item Students must practice empathy with their peers
+\end{itemize}
 
-Since the collapse, some of the emails from Enron employees discovered in the course of the court case have been made public. This dataset includes emails leading up to the events and in particular from high-profile executives who were ultimately convicted \cite{enron_dataset}. This Enron email dataset is a unique testbed for the study of markers of fraud and deception in a real-world scenario.
+Because the classroom proceeds to the next topic only once every student has demonstrated their understanding, students cannot stall for time, expecting the teacher to lose patience and move the class on. Because of this, Te Ataarangi has been effective for many students who do not function well in a traditional classroom.
 
-Combining this with the prior research studying deception in games, the goal of this project was to analyze the Enron email dataset, and observe whether the same markers of deception that are displayed in game environments are also present within the emails of Enron employees who were eventually convicted of fraud.
+The experiments in this paper have been designed with the aim of replicating the Te Ataarangi method of teaching using computational techniques. One long-term goal of doing this could be to design computational language agents that are capable of teaching the language to new students using the method. In this paper, we aimed to investigate the feasibility of training an agent to deliver a Te Ataarangi lesson by carefully formulating the problem, defining the requirements of the agent and then testing out the components one by one. At the end, we would like to demonstrate that our computational model works \textit{because} it follows the principles of the original method.
 
-We further train our own classifiers to identify emails written by fraudsters, and assess the linguistic features it finds most useful. 
+Following this line of thinking, we observe that a typical Te Ataarangi lesson generally takes the form of a scalar-implicature game, wherein the teacher uses cuisenaire rods and hand gestures to specify a world state, or a \textit{context} ($c$) for discussion. They then give an \textit{utterance} ($u$) corresponding to that context, and over time the job of the student is to identify the relevant grammatical rules and vocabulary so that they can generalise the given utterance to other contexts. The student can then demonstrate their knowledge by carefully constructing their own contexts, and proving they have the correct utterance to the teacher.
 
-%\textbf{What is the hypothesis that you test and how do you go about doing so?}
-%
-%To this end, we... 
-%
-%It turns out that...
-%
-% This project provided an exciting opportunity to dive into this ``true crime'' world and investigate the nature of fraud from a language analysis prospective. Fraud presupposes deception and we therefore leaned into identifying deception from text. 
+The lesson bears a resemblance to a Socratic dialogue and incorporates aspects of pragmatics. Since the teacher must think about what the student knows or does not know about the language, and construct examples in order to falsify incorrect assumptions, or to add missing context that may also be leading the student astray. We therefore propose to model the lesson with a pair of Rational Speech Actors according to the Rational Speech Act \cite{frank2012predicting,goodman2016pragmatic} framework. We define two Rational Speech Actors, one each for the teacher and the student. Both agents implement a literal listener, a pragmatic speaker and a pragmatic listener. The literal listener is a model that defines a mapping from contexts ($c$) to utterances ($u$). The teacher agent is pre-trained, such that it has prior knowledge of the rules of the language. The student agent then learns through a dialogue with the teacher agent. The dialogue is set up in the following way:
 
-% We then proceed to search for other potential markers. The only one that stood out was negative sentiment. We explore the correlation between negative sentiment and fraud. 
+\begin{itemize}
+  \item The teacher selects an (context, utterance) pair and provides it to the student by way of demonstration.
+  \item The student then selects an (context, utterance) pair and conjectures an utterance for that state for the teacher to evaluate.
+  \item The student receives feedback from the teacher, either by way of correction, or the conversation may move on indicating that the selection was correct. The feedback is provided as an additional (context, utterance) pair.
+  \item This loop continues until the teacher is satisfied that the student has acquired the required knowledge.
+\end{itemize}
 
+The contexts under consideration are defined as an arrangement of cuisenaire rods. Each rod has a colour and a length, and they are sampled at random and arranged into a row. From the sample, a selection is made and the utterance is constructed to accurately identify the selected rods among their neighbours. In English, utterances therefore look may look like ``The red rod'', ``The blue rod on the left'', or ``All of the rods'' if all of the rods in the context are selected.
 
-% was not statistically significant. 
+Throughout this work, we operate under the assumption that we are working with an under-resourced language. So we place an emphasis on methods that could reasonably be applied by a language community in the absence of large training datasets containing millions of tokens. Te reo Māori is used as the language for all experiments, although it would be easy to run these experiments in any language, and would require the hand labelling of no more than 1,000 examples. As a speaker of the Māori language, I was able to prepare the dataset for these experiments alone, in only a few hours.
 
-
-% It turns out that, indeed, none of the deception markers identified in [danescu] can be applied transversally to the deception in Enron. 
-
-
+We begin the project by training a recurrent neural network to solve this scalar implicature problem, using a small training dataset. Initially, it was proposed to use a small dataset for parsimony reasons, as the task as designed resembles a very early beginner Māori language lesson, requiring minimal prior knowledge of the language. This problem proved to be more difficult than initially anticipated, and so various strategies, such as data augmentation were attempted in order to pre-train a competent teacher agent for this task.
