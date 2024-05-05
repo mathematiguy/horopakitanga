@@ -13,7 +13,6 @@ from itertools import chain
 from torch.utils.data import DataLoader
 from ataarangi.models import RNNModel, TransformerModel
 from ataarangi.data import (
-    encode_world_state,
     RākauDataset,
     SequenceTokenizer,
     load_data,
@@ -45,12 +44,13 @@ def train_one_epoch(model, criterion, optimizer, dataloader, device):
         targets = targets[mask]
 
         loss = criterion(outputs, targets)
+
         loss.backward()
         optimizer.step()
 
         total_loss += loss.item()
 
-    return total_loss / len(dataloader)
+    return total_loss
 
 
 def cross_entropy_loss(outputs, targets):
@@ -87,7 +87,7 @@ def evaluate(model, criterion, dataloader, device):
             loss = criterion(outputs, targets)
             total_loss += loss.item()
 
-    return total_loss / len(dataloader)
+    return total_loss
 
 
 def setup_model(
@@ -95,7 +95,6 @@ def setup_model(
     num_layers,
     embed_size,
     hidden_size,
-    dropout,
     batch_size,
     num_batches=-1,
     train_path="data/train_set.csv",
@@ -172,7 +171,6 @@ def setup_model(
 @click.option(
     "--hidden_size", default=512, type=int, help="Size of the hidden layers (for RNN)."
 )
-@click.option("--dropout", default=0.1, type=float, help="Dropout rate.")
 @click.option("--batch_size", default=64, type=int, help="Batch size for training.")
 @click.option("--epochs", default=100, type=int, help="Number of epochs to train.")
 @click.option("--train_path", type=str, help="Path to the training data file.")
@@ -202,7 +200,6 @@ def run_training(
     num_layers,
     embed_size,
     hidden_size,
-    dropout,
     batch_size,
     epochs,
     train_path,
@@ -213,10 +210,10 @@ def run_training(
 ):
 
     model, train_dataloader, dev_dataloader, criterion, optimizer, device = setup_model(
-        lr, num_layers, embed_size, hidden_size, dropout, batch_size, num_batches
+        lr, num_layers, embed_size, hidden_size, batch_size, num_batches
     )
 
-    model_name = f"lr={lr}-num_layers={num_layers}-embed_size={embed_size}-hidden_size={hidden_size}-dropout={dropout}"
+    model_name = f"lr={lr}-num_layers={num_layers}-embed_size={embed_size}-hidden_size={hidden_size}"
 
     # Make sure the model folder exists
     if not os.path.exists(model_folder):

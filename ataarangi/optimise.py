@@ -25,17 +25,15 @@ def generate_trial_name(trial):
     num_layers = trial.params["num_layers"]
     embed_size = trial.params["embed_size"]
     hidden_size = trial.params["hidden_size"]
-    dropout = trial.params["dropout"]
     batch_size = trial.params["batch_size"]
-    return f"trial_lr={lr:.5f}-layers={num_layers}-embed={embed_size}-hidden_size={hidden_size}--dropout={dropout:.3f}-batch_size={batch_size}"
+    return f"trial_lr={lr:.5f}-layers={num_layers}-embed={embed_size}-hidden_size={hidden_size}-batch_size={batch_size}"
 
 
 def objective(trial):
-    lr = trial.suggest_float("lr", 1e-5, 1e-3, log=True)
-    num_layers = trial.suggest_int("num_layers", 2, 10)
+    lr = trial.suggest_float("lr", 1e-5, 1e-1, log=True)
+    num_layers = trial.suggest_int("num_layers", 1, 10)
     embed_size = trial.suggest_categorical("embed_size", [16, 32, 64, 128, 256])
-    hidden_size = trial.suggest_categorical("hidden_size", [128, 256, 512, 768])
-    dropout = trial.suggest_float("dropout", 0.0, 0.3)
+    hidden_size = trial.suggest_categorical("hidden_size", [64, 128, 256, 512, 768])
     batch_size = trial.suggest_categorical("batch_size", [16, 32, 64, 128])
 
     # Optionally set a descriptive name for the trial
@@ -44,7 +42,7 @@ def objective(trial):
 
     # Assuming data loaders and model setup is handled separately
     model, train_dataloader, dev_dataloader, criterion, optimizer, device = setup_model(
-        lr, num_layers, embed_size, hidden_size, dropout, batch_size
+        lr, num_layers, embed_size, hidden_size, batch_size
     )
 
     epochs = 100  # You might want to adjust this per trial or pass it as an argument

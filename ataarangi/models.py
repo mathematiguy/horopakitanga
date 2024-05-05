@@ -12,10 +12,9 @@ import torch.nn.functional as F
 from itertools import chain
 from torch.utils.data import DataLoader
 from ataarangi.data import (
-    encode_world_state,
     RākauDataset,
     SequenceTokenizer,
-    load_data,
+    load_data
 )
 
 
@@ -206,20 +205,12 @@ class RNNModel(nn.Module):
 
         self.to(self.device)
 
-    def forward(self, src, tgt=None):
+    def forward(self, src):
         src = self.embedding(src)
-        if tgt is not None:
-            tgt = self.embedding(tgt)
-            combined = torch.cat([src, tgt], dim=1)
-            if self.architecture == "lstm":
-                output, (hidden, cell) = self.rnn(combined)
-            else:
-                output, hidden = self.rnn(combined)
+        if self.architecture == "lstm":
+            output, (hidden, cell) = self.rnn(src)
         else:
-            if self.architecture == "lstm":
-                output, (hidden, cell) = self.rnn(src)
-            else:
-                output, hidden = self.rnn(src)
+            output, hidden = self.rnn(src)
         output = self.fc(output)
         return output
 
