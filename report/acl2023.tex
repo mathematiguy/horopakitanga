@@ -9,6 +9,7 @@
 
 % Standard package includes
 \usepackage{times}
+\usepackage{array}
 \usepackage{latexsym}
 
 % For proper rendering and hyphenation of words containing Latin characters (including in bib files)
@@ -51,7 +52,7 @@
 
 \maketitle
 \begin{abstract}
-In this paper, I designed an implicature game based on a teaching methodology designed to teach low resource languages in a multi-modal way.
+In this paper, we attempt to design and test a learning system taking inspiration from a commonly used methodology for language teaching known as ``the Silent Way'' and operationalised by the Indigenous Māori community in New Zealand as ``Te Ataarangi''. We describe a dialogue agent system, and use the methodology to motivate a scalar-implicature game based on cuisenaire rods. We compose a dataset for solving this game, and implement a data-augmentation strategy, and a rule-based system using part of speech labels to cope with the low-resource nature of the problem.
 \end{abstract}
 
 %To this end,
@@ -66,7 +67,7 @@ In this paper, I designed an implicature game based on a teaching methodology de
 \section{Method}
 \input{sections/3-method}
 
-\section{Results}
+\section{Experiments \& Results}
 \input{sections/4-results}
 
 \section{Discussion and Conclusion}
@@ -79,7 +80,10 @@ In this paper, I designed an implicature game based on a teaching methodology de
 \bibliography{references}
 \bibliographystyle{acl_natbib}
 
-% \appendix
+\appendix
+
+\section{Appendix}
+\input{sections/6-appendix}
 
 % \section{Example Appendix}
 % \label{sec:appendix}

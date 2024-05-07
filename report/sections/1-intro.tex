@@ -3,14 +3,12 @@ The Silent Way \cite{gattegno2010teaching} is a language teaching methodology wh
 In New Zealand, as well as in other countries, the Silent Way has been adopted by the Māori people as a dominant teaching methodology, especially for second-language learners of the Māori language (te reo Māori). The methodology was specifically adapted to te reo Māori \cite{mataira1980effectiveness,ka2008ngoingoi} by Dame Kāterina Te Heikōkō Mataira and Ngoingoi Pewhairangi where it is referred to as ``Te Ataarangi''. In the classroom, students in Te Ataarangi are encouraged to master grammar by experiencing the language primarily through speaking and listening, and doing practical exercises with other students. The classroom operates according to the following rules:
 
 \begin{itemize}
-  \item Speaking in English is not allowed
-  \item Belittling other students is not allowed
-  \item Students are not allowed to prompt other students
-  \item Students can only reply when a question is posed directly to them
-  \item Students must practice empathy with their peers
+  \item Speaking in English is not allowed.
+  \item Belittling other students is not allowed.
+  \item Students are not allowed to prompt other students.
+  \item Students can only reply when a question is posed directly to them.
+  \item Students must practice empathy with their peers.
 \end{itemize}
-
-Because the classroom proceeds to the next topic only once every student has demonstrated their understanding, students cannot stall for time, expecting the teacher to lose patience and move the class on. Because of this, Te Ataarangi has been effective for many students who do not function well in a traditional classroom.
 
 The experiments in this paper have been designed with the aim of replicating the Te Ataarangi method of teaching using computational techniques. One long-term goal of doing this could be to design computational language agents that are capable of teaching the language to new students using the method. In this paper, we aimed to investigate the feasibility of training an agent to deliver a Te Ataarangi lesson by carefully formulating the problem, defining the requirements of the agent and then testing out the components one by one. At the end, we would like to demonstrate that our computational model works \textit{because} it follows the principles of the original method.
 
@@ -25,7 +23,7 @@ The lesson bears a resemblance to a Socratic dialogue and incorporates aspects o
   \item This loop continues until the teacher is satisfied that the student has acquired the required knowledge.
 \end{itemize}
 
-The contexts under consideration are defined as an arrangement of cuisenaire rods. Each rod has a colour and a length, and they are sampled at random and arranged into a row. From the sample, a selection is made and the utterance is constructed to accurately identify the selected rods among their neighbours. In English, utterances therefore look may look like ``The red rod'', ``The blue rod on the left'', or ``All of the rods'' if all of the rods in the context are selected.
+The contexts under consideration are defined as an arrangement of cuisenaire rods. Each rod has a colour and a length, and they are sampled at random and arranged into a row. From the sample, a selection is made and the utterance is constructed to accurately identify the selected rods among their neighbours. In English, utterances therefore look like ``The red rod'', ``The blue rod on the left'', or ``All of the rods'' if all of the rods in the context are selected.
 
 Throughout this work, we operate under the assumption that we are working with an under-resourced language. So we place an emphasis on methods that could reasonably be applied by a language community in the absence of large training datasets containing millions of tokens. Te reo Māori is used as the language for all experiments, although it would be easy to run these experiments in any language, and would require the hand labelling of no more than 1,000 examples. As a speaker of the Māori language, I was able to prepare the dataset for these experiments alone, in only a few hours.
 

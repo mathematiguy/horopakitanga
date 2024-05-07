@@ -1,45 +1,9 @@
-% \textbf{What conclusions can be drawn from your experiments? Was your initial hypothesis verified? What are the limitations of your work, and how could it be extended?}
+The labelling task was designed to represent the kind of task that might be expected of a beginner language learner, and the dataset was constructed to have many ($\sim$50+) times the amount of data that would ordinarily be needed by a human to learn this sort of task. Because of this, it was surprising that a model was not able to effectively learn the goal task, even with the significant data augmentation and heavy guidance provided by the 1-gram model.
 
-% Sentiment classifier (hugging face ref) to test the hypothesis that negative sentiment correlates with fraud... Not sure if this is relevant here... Will find place later.
+It is possible the problem was still too complex for a simple model to solve, and we could have tried removing some variables such as length, or reducing the size of some of the categories. This might have been one way to verify that the task was solvable in principle.
 
-Results in Figures \ref{fig:politeness} and \ref{fig:discourse} align well with the hypotheses in \cite{diplomacy}, namely that increased politeness and planning discourse markers are cues related to deception. This gives credence to the conjecture that these linguistic cues are indeed useful in more complex environments beyond games, and are general traits related to deceptive behaviour.
+Another thing that might have helped is to train the model for far longer. The longer training runs we ran took around six hours to run to completion and over 1,000 epochs. While the loss for some runs was below 0.000001, we still found the model had not learned how to produce a plausible looking sequence.
 
-Most notably, it is interesting that planning discourse markers increase dramatically at the very beginning of the collapse and then subside, even as further events are unfolding, whereas politeness increases gradually up to the very collapse. This is an interesting addition to the results in \cite{diplomacy}. Diplomacy covers a short time span, whether measured by physical time or by number of events leading up to the deception. It is therefore not surprising that all deception markers overlap. In the case of Enron, the collapse was unfolding over a year, leaving more space between events, and therefore more time for deception markers to develop. %It would be interesting to look further into whether planning discourse markers regularly precede increased politeness in the course of deception. 
+The overall aim of the project was to design and test a learning system that functioned in a similar way to the Te Ataarangi method. Some progress was made towards this goal in terms of formulating the problem, but having a competent model at the target task is necessary for that model to act as a teacher and test out the theory further.
 
-The fact that our results align with the ones in \cite{diplomacy}, though the alignment is not perfect, gives us some food for thought. %, as we labour in a very different setting altogether. 
-In particular, since the emails analyzed are not directed at the targets of the deception (i.e., the shareholders and authorities), our findings suggest that an individual's general level of politeness increases when that individual engages in deception more generally. 
-
-Furthermore, the results from our classifier training gives some interesting insights into the word usage of deceptive and non-deceptive actors. Most notable are the words with negative weights (therefore indicative of a non-POI email). There we observe words like ``fax" and ``email" which may be more associated with non-executive individuals. Additionally words like ``pm" suggest potential meetings which may be more commonplace for non-executive individuals.
-
-These words may not be applicable to other settings, however additional work may be needed to confirm this.
-
-\subsection{Limitations}
-
-One major limitation of this work is that our classification of POIs only occurs based a single email, and does not account for prior context or email threads within its prediction. Doing so in such a situation could potentially give even more insightful cues in deception and potentially manipulation.
-% Though our dataset contained over 13,000 emails, this may not be an appropriate size, and therefore represent appropriate difficulty, in detecting fraudulent actors in other settings. In this case, our approach was limited by the number of emails corresponding to the POIs, and more data could give better results.
-
-% Aspects specific to the Enron dataset were also problematic. For example, almost all of the emails from Kenneth Lay's inbox were written by his assistant, which had to be discarded since they were not written by him. 
-% This choice was made in order to preserve the linguistic qualities of the emails. However, it had several consequences, the obvious one being that we were left with very few emails from K. Lay, who was a major player in the Enron collapse, but also a top exec who rarely wrote his own emails. A message written by his assistant from his account was necessarily written at his behest. We have thus deprived ourselves of a large number of messages that would faithfully represent his intent. This is not a trivial loss, since deception is perpetrated both in content and in form (cite the italian papers or something ???) and we have restricted ourselves entirely to the form. 
-
-Another limitation is that a large part of the deception at Enron was targeted at the general public. As such, interviews and public communications by POIs would have added valuable linguistic cues that are not included in our analysis. 
-
-\subsection{Future work} 
-
-% The discrepancy between the negative words identified as positive features for predicting POIs by our classifier, and our finding that negative sentiment is an area for more exploration. 
-Incorporating models that can handle email context and email threads within their predictions would be an important step towards better understanding deception. 
-
-Another interesting direction would be to test whether toxicity relates to fraud. This would be consistent with the results of our classifier and to some extent with \cite{hubris} seeing as toxicity and hubris can be linked.
-
-% As mentioned above, another avenue for future work would be to investigate how the various deception markers are deployed relative to each other. Based on our meager evidence, we conjecture that an increase in planning discourse may be of shorter duration and may occur at the start of the deceptive practices, whereas politeness may increase throughout the deception. This also follows some common sense intuition. Given that planning discourse is more resource intensive and more deliberate, it makes sense that it be used parsimoniously and reluctantly. Politeness, on the other hand, can be thought of as a (conscious or subconscious) compensation technique, and therefore be used increasingly as the deception proceeds. 
-
-\subsection{Conclusion}
-We explored the possibility of identifying emails written by a fraudster based solely on their language using the Enron email dataset. We found that politness and planning discourse markers increased in frequency around the collapse, but sentiment did not appear related to deception. Our linear classifer acheieved good F1 score indicating that it is possible to identify POIs even among other executives. More research is required to validate the features identified by our models.
-
-% In this paper we explore the possibility of identifying
-% a fraudster based on their language. To this end, we consider the
-% data set of emails of Enron employees, ranging from convicted
-% offenders to regular employees. We look at fraud through the prism
-% of deception, verifying if known markers of deception correlate
-% with fraud. We also look for new potential language markers that
-% could correlate to fraud.
-
+At the same time, the task we designed has some potential as a simple world model that can use used to test low-resource languages. It can be simplified further, or extended in new ways, similar to a grid-world. In the classroom the rods are used in many other ways in practice. It seems possible that we got close to training a competent model, and if we had achieved that it would have been interesting to investigate the other parts of the problem further.

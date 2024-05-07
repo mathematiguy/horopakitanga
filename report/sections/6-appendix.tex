@@ -1,0 +1,72 @@
+In the appendix we have included the complete table of token classes with translation [\ref{tab:maori_words}], as well as the table showing which token class is allowed to follow after a given class according to the 1-gram model [\ref{tab:token_links}].
+
+\begin{table}[h]
+  \centering
+  \begin{tabular}{|l|l|l|}
+    \hline
+    \textbf{Māori} & \textbf{English} & \textbf{Token Class} \\ \hline
+    mā & white & colour \\ \hline
+    kōwhai & yellow & colour \\ \hline
+    kikorangi & blue & colour \\ \hline
+    kākāriki & green & colour \\ \hline
+    pango & black & colour \\ \hline
+    māwhero & pink & colour \\ \hline
+    whero & red & colour \\ \hline
+    parauri & brown & colour \\ \hline
+    te & the (singular) & det \\ \hline
+    ngā & the (plural) & det \\ \hline
+    me & and & conjunction \\ \hline
+    rākau & rod & noun \\ \hline
+    iti & small & size \\ \hline
+    nui & large & size \\ \hline
+    hāunga & except & except \\ \hline
+    kei & at & locative \\ \hline
+    taha & side & position \\ \hline
+    mauī & left & side \\ \hline
+    matau & right & side \\ \hline
+    rua & two & number \\ \hline
+    toru & three & number \\ \hline
+    katoa & all & all \\ \hline
+    tawhiti rawa & furthest & furthest \\ \hline
+    rawa & most & most \\ \hline
+    ki & to & to \\ \hline
+    i & in & in \\ \hline
+    e & - & e \\ \hline
+    waenganui & between & preposition \\ \hline
+    mai & from & particle \\ \hline
+    tuarua & second & ordinal \\ \hline
+  \end{tabular}
+  \caption{Translation and Token Classes of Māori Words}
+  \label{tab:maori_words}
+\end{table}
+
+
+\begin{table}[h]
+  \centering
+  \begin{tabular}{|l|p{5cm}|}
+    \hline
+    \textbf{Token class} & \textbf{Allowed next token classes} \\ \hline
+    [SEP] & det \\ \hline
+    all & except \\ \hline
+    colour & [EOS], all, conjunction, e, furthest, in, locative, ordinal, size, to \\ \hline
+    conjunction & det \\ \hline
+    det & noun, position \\ \hline
+    e & number \\ \hline
+    except & det \\ \hline
+    furthest & to \\ \hline
+    in & det, preposition \\ \hline
+    locative & det, preposition \\ \hline
+    most & [EOS], conjunction, e \\ \hline
+    noun & [EOS], all, colour, e, except, furthest, size \\ \hline
+    number & [EOS], conjunction, furthest, locative \\ \hline
+    ordinal & particle \\ \hline
+    particle & in \\ \hline
+    position & colour, side \\ \hline
+    preposition & [EOS], conjunction \\ \hline
+    side & [EOS], conjunction \\ \hline
+    size & [EOS], conjunction, e, locative, most \\ \hline
+    to & det \\ \hline
+  \end{tabular}
+  \caption{Token classes and the token classes that are allowed to follow them according to the 1-gram model}
+  \label{tab:token_links}
+\end{table}
