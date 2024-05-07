@@ -5,6 +5,7 @@ SINGULARITY_ARGS ?=
 DVC_CACHE_DIR ?= $(shell dvc cache dir)
 FLAGS ?= --nv -B $$(pwd):/code --pwd /code -B $(DVC_CACHE_DIR) -B ataarangi:/pkg/ataarangi --env MPLCONFIGDIR=/code/.matplotlib --env HF_HOME=/code/.cache
 VENV_PATH ?= venv
+PYTHON ?= /opt/local/bin/python3.11
 
 include cluster/makefile
 
@@ -14,13 +15,13 @@ report:
 	$(RUN) bash -c "cd report && latexmk acl2023.tex -pdf"
 
 optimise:
-	$(RUN) python3 ataarangi/optimise.py --train_path data/train_set.csv --dev_path data/dev_set.csv --model_folder models
+	$(RUN) $(PYTHON) ataarangi/optimise.py --train_path data/train_set.csv --dev_path data/dev_set.csv --model_folder models
 
 train:
-	$(RUN) python3 ataarangi/train.py --batch_size 32 --lr 0.00086 --num_layers 2 --embed_size 128 --hidden_size 256 --epochs 10000 --train_path data/train_set.csv --dev_path data/dev_set.csv
+	$(RUN) $(PYTHON) ataarangi/train.py --batch_size 32 --lr 0.0001 --num_layers 10 --embed_size 128 --hidden_size 512 --epochs 100 --architecture lstm --train_path data/train_set.csv --dev_path data/dev_set.csv
 
 label:
-	$(RUN) python3 ataarangi/labelling.py
+	$(RUN) $(PYTHON) ataarangi/labelling.py
 
 run:
 	$(RUN) bash run.sh

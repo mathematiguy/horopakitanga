@@ -1,5 +1,5 @@
 {
-    "[CLS]": [
+    "[SEP]": [
         "det"
     ],
     "all": [
@@ -99,7 +99,7 @@
         "[HEIGHT]"
     ],
     "[HEIGHT]": [
-        "[CLS]",
+        "[SEP]",
         "[SELECTION]"
     ],
     "[EOS]": [

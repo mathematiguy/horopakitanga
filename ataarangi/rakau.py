@@ -47,6 +47,11 @@ class WorldState:
         else:
             self.locations[rākau.location] = 1
 
+    def __repr__(self):
+        return "WorldState({})".format(
+            ", ".join([r.__repr__() for r in self.ngā_rākau])
+        )
+
     def to_dict(self):
         return {
             "ngā_rākau": [

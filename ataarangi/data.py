@@ -1,15 +1,149 @@
 import json
 import torch
+import random
 import numpy as np
 import pandas as pd
-from itertools import chain
+import itertools as it
 from torch.utils.data import Dataset
 from ataarangi.utils import split_chunks
+from ataarangi.rakau import WorldState, Rākau
 from torch.nn.utils.rnn import pad_sequence
 
 
 COLOURS = ["red", "blue", "green", "yellow", "black", "white", "brown", "pink"]
+MĀORI_COLOURS = [
+    "whero",
+    "kikorangi",
+    "kākāriki",
+    "kōwhai",
+    "pango",
+    "mā",
+    "parauri",
+    "māwhero",
+]
 color_map = dict(zip(COLOURS, range(len(COLOURS))))
+māori_colour_map = dict(zip(COLOURS, MĀORI_COLOURS))
+colour_to_id = dict(zip(COLOURS, range(len(COLOURS))))
+id_to_colour = {v: k for k, v in colour_to_id.items()}
+
+
+def create_permutation_matrix(elements):
+    # Generate all permutations of the array of colors
+    elem_indices = np.arange(len(elements))
+    all_perms = list(it.permutations(elem_indices))
+    num_perms = len(all_perms)
+
+    # Create a 3D array to hold the permutation transformation matrices
+    transformation_tensor = np.zeros(
+        (num_perms, len(elements), len(elements)), dtype=int
+    )
+
+    for i, perm in enumerate(all_perms):
+        # Fill the appropriate places in the matrix to indicate the movement
+        transformation_tensor[i, elem_indices, perm] = 1
+
+    return transformation_tensor
+
+
+def generate_colour_permutations(indices, elements=COLOURS):
+    """
+    Generate all permutations of an array of unique elements of a given length, and filter
+    such that each permutation moves at least one of the elements in `indices`.
+    """
+    permutation_matrix = create_permutation_matrix(elements)
+    permutations = [
+        dict(zip(elements, [elements[idx] for idx in np.where(perm)[1]]))
+        for perm in permutation_matrix
+    ]
+    permutations = [
+        {k: v for k, v in d.items() if colour_to_id[k] in indices} for d in permutations
+    ]
+    return [dict(t) for t in {tuple(d.items()) for d in permutations}]
+
+
+def generate_ordered_size_permutations(sizes, min_size, max_size):
+    length = len(set(sizes))
+    sizes = list(set(sizes))
+    from itertools import combinations
+
+    # Generate all possible unique ordered combinations of sizes
+    # within the given range that preserve order.
+    all_sizes = range(min_size, max_size + 1)
+    size_map = [
+        dict(zip(range(length), comb)) for comb in combinations(all_sizes, length)
+    ]
+    return [{sizes[k]: v for k, v in d.items()} for d in size_map]
+
+
+def generate_rākau_permutations(state, description, sample_size=1000):
+
+    tokens = description.split()
+
+    state_colours = [colour_to_id[r.color] for r in state.ngā_rākau]
+    state_sizes = [r.height for r in state.ngā_rākau]
+    state_locations = [r.location for r in state.ngā_rākau]
+    colour_permutations = generate_colour_permutations(state_colours)
+    size_permutations = generate_ordered_size_permutations(state_sizes, 1, 10)
+
+    results = []
+    for _ in range(sample_size):
+        colour_map = random.choice(colour_permutations)
+        size_map = random.choice(size_permutations)
+
+        if not any([side in tokens for side in ["mauī", "matau"]]):
+            location_map = dict(
+                zip(
+                    range(1, len(state_locations) + 1),
+                    tuple(random.choices(range(10), k=len(state_locations))),
+                )
+            )
+        else:
+            if random.random() > 0.5:
+                # Keep the order
+                location_map = dict(
+                    zip(
+                        range(1, len(state_locations) + 1),
+                        range(1, len(state_locations) + 1),
+                    )
+                )
+            else:
+                # Reverse the order
+                location_map = dict(
+                    zip(
+                        range(1, len(state_locations) + 1),
+                        list(range(1, len(state_locations) + 1))[::-1],
+                    )
+                )
+                tokens = [
+                    (
+                        "mauī"
+                        if token == "matau"
+                        else "matau" if token == "mauī" else token
+                    )
+                    for token in tokens
+                ]
+
+        translated_colour_map = {
+            māori_colour_map[k]: māori_colour_map[v] for k, v in colour_map.items()
+        }
+        translated_tokens = [
+            token if not token in MĀORI_COLOURS else translated_colour_map[token]
+            for token in tokens
+        ]
+
+        ngā_rākau = WorldState()
+        for rākau in state.ngā_rākau:
+            ngā_rākau.add_rākau(
+                Rākau(
+                    color=colour_map[rākau.color],
+                    height=size_map[rākau.height],
+                    location=location_map[rākau.location],
+                    selected=rākau.selected,
+                )
+            )
+        results.append({"state": ngā_rākau, "description": " ".join(translated_tokens)})
+
+    return results
 
 
 class RākauDataset(Dataset):

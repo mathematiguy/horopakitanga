@@ -11,11 +11,7 @@ import torch.nn.functional as F
 
 from itertools import chain
 from torch.utils.data import DataLoader
-from ataarangi.data import (
-    RākauDataset,
-    SequenceTokenizer,
-    load_data
-)
+from ataarangi.data import RākauDataset, SequenceTokenizer, load_data
 
 
 class TransformerModel(nn.Module):
@@ -188,7 +184,6 @@ class RNNModel(nn.Module):
     def __init__(
         self, tokenizer, embed_size, hidden_size, num_layers, architecture="rnn"
     ):
-
         super(RNNModel, self).__init__()
         self.tokenizer = tokenizer
         self.vocab_size = self.tokenizer.vocab_size
@@ -200,30 +195,38 @@ class RNNModel(nn.Module):
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
         self.embedding = nn.Embedding(self.vocab_size, embed_size)
-        self.rnn = nn.RNN(embed_size, hidden_size, num_layers, batch_first=True)
+        if self.architecture == "lstm":
+            self.rnn = nn.LSTM(embed_size, hidden_size, num_layers, batch_first=True)
+        else:
+            self.rnn = nn.RNN(embed_size, hidden_size, num_layers, batch_first=True)
         self.fc = nn.Linear(hidden_size, self.vocab_size)
 
         self.to(self.device)
 
     def forward(self, src):
         src = self.embedding(src)
+        hidden = None  # Initialize hidden state
         if self.architecture == "lstm":
-            output, (hidden, cell) = self.rnn(src)
+            output, (hidden, cell) = self.rnn(src, hidden)
         else:
-            output, hidden = self.rnn(src)
+            output, hidden = self.rnn(src, hidden)
         output = self.fc(output)
         return output
 
     def generate(self, input_tokens, max_length=30):
         outputs = []
         hidden = None
+        cell = None  # Initialize cell state for LSTM
         input_tokens = torch.tensor(input_tokens, dtype=torch.long).to(self.device)
 
         # Feed the initial sequence to prime the state
-        embedded = self.embedding(input_tokens[:-1]).unsqueeze(
-            0
-        )  # Batch dimension added
-        output, hidden = self.rnn(embedded, hidden)
+        embedded = self.embedding(input_tokens[:-1]).unsqueeze(0)  # Add batch dimension
+
+        if self.architecture == "lstm":
+            output, (hidden, cell) = self.rnn(embedded, None)
+        else:
+            output, hidden = self.rnn(embedded, None)
+
         logits = self.fc(output)
         outputs.append(logits)
 
@@ -235,7 +238,10 @@ class RNNModel(nn.Module):
         # Generate subsequent tokens
         for _ in range(max_length - len(input_tokens)):
             embedded = self.embedding(current_token)
-            output, hidden = self.rnn(embedded, hidden)
+            if self.architecture == "lstm":
+                output, (hidden, cell) = self.rnn(embedded, (hidden, cell))
+            else:
+                output, hidden = self.rnn(embedded, hidden)
             logits = self.fc(output)
             next_token = logits.argmax(-1)
             outputs.append(logits)

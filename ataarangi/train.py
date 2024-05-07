@@ -96,6 +96,7 @@ def setup_model(
     embed_size,
     hidden_size,
     batch_size,
+    architecture,
     num_batches=-1,
     train_path="data/train_set.csv",
     dev_path="data/dev_set.csv",
@@ -142,7 +143,7 @@ def setup_model(
         embed_size=embed_size,
         hidden_size=hidden_size,
         num_layers=num_layers,
-        architecture="rnn",
+        architecture=architecture,
     ).to(device)
 
     criterion = nn.CrossEntropyLoss()
@@ -210,10 +211,10 @@ def run_training(
 ):
 
     model, train_dataloader, dev_dataloader, criterion, optimizer, device = setup_model(
-        lr, num_layers, embed_size, hidden_size, batch_size, num_batches
+        lr, num_layers, embed_size, hidden_size, batch_size, architecture, num_batches
     )
 
-    model_name = f"lr={lr}-num_layers={num_layers}-embed_size={embed_size}-hidden_size={hidden_size}"
+    model_name = f"architecture={architecture}-lr={lr}-num_layers={num_layers}-embed_size={embed_size}-hidden_size={hidden_size}"
 
     # Make sure the model folder exists
     if not os.path.exists(model_folder):
